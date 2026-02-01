@@ -1,9 +1,49 @@
-import React, { useState, useEffect } from 'react';
-import './ProductList.css'
+import React, { useState } from 'react';
+import './ProductList.css';
+import { useDispatch, useSelector } from 'react-redux';
+import { addItem, removeItem, updateQuantity } from './CartSlice';
 import CartItem from './CartItem';
+
 function ProductList({ onHomeClick }) {
-    const [showCart, setShowCart] = useState(false);
-    const [showPlants, setShowPlants] = useState(false); // State to control the visibility of the About Us page
+  const [showCart, setShowCart] = useState(false);
+  const [showPlants, setShowPlants] = useState(false);
+  const [addedToCart, setAddedToCart] = useState({});
+
+  const dispatch = useDispatch();
+  const cartItems = useSelector((state) => state.cart.items);
+
+  const handleAddToCart = (product) => {
+    dispatch(addItem(product));
+    setAddedToCart((prev) => ({
+      ...prev,
+      [product.name]: true,
+    }));
+  };
+
+  const handleIncrement = (item) => {
+    dispatch(updateQuantity({ name: item.name, quantity: item.quantity + 1 }));
+  };
+
+  const handleDecrement = (item) => {
+    if (item.quantity > 1) {
+      dispatch(updateQuantity({ name: item.name, quantity: item.quantity - 1 }));
+    } else {
+      dispatch(removeItem(item.name));
+    }
+  };
+
+  const handleRemove = (item) => {
+    dispatch(removeItem(item.name));
+  };
+
+  const calculateTotalCost = (item) => {
+    return parseFloat(item.cost.substring(1)) * item.quantity;
+  };
+
+  const calculateTotalAmount = () => {
+    return cartItems.reduce((sum, item) => sum + calculateTotalCost(item), 0);
+  };
+
 
     const plantsArray = [
         {
@@ -261,11 +301,7 @@ function ProductList({ onHomeClick }) {
                 <div className="product-list">
                   {category.plants.map((plant, plantIndex) => (
                     <div className="product-card" key={plantIndex}>
-                      <img
-                        className="product-image"
-                        src={plant.image}
-                        alt={plant.name}
-                      />
+                      <img className="product-image" src={plant.image} alt={plant.name} />
                       <div className="product-title">{plant.name}</div>
                       <div className="product-description">{plant.description}</div>
                       <div className="product-cost">{plant.cost}</div>
@@ -273,8 +309,13 @@ function ProductList({ onHomeClick }) {
                         className="product-button"
                         onClick={() => handleAddToCart(plant)}
                         disabled={addedToCart[plant.name]}
+                        style={{
+                          backgroundColor: addedToCart[plant.name] ? 'grey' : '#4CAF50',
+                          cursor: addedToCart[plant.name] ? 'not-allowed' : 'pointer',
+                          color: '#fff',
+                        }}
                       >
-                        {addedToCart[plant.name] ? "Added" : "Add to Cart"}
+                        {addedToCart[plant.name] ? 'Added to Cart' : 'Add to Cart'}
                       </button>
                     </div>
                   ))}
